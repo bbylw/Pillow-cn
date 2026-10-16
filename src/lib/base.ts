@@ -1,11 +1,12 @@
-// 站点部署在 GitHub Pages 的「项目站」上，线上带着子路径：
-//   https://bbylw.github.io/Pillow-cn/
-// public/ 里的文件（favicon、样图、视频、母题遮罩）不过打包器，
-// 引用它们时必须自己拼上这个前缀，写 "/samples/x.jpg" 本地好看、线上 404。
+// 站点挂在自定义域名 pillow.ndjp.net 上，从**域名根**提供，
+// 所以 base 是 "/"，这里拼出来的就是 "/samples/x.jpg"。
 //
-// 坑：Astro 7 的 import.meta.env.BASE_URL 直接返回 base 选项的原值，
-// 结尾**没有**斜杠（实测 "/Pillow-cn"），所以这里统一去尾再拼，
-// 无论 base 写成 "/Pillow-cn"、"/Pillow-cn/" 还是 "/" 都成立。
+// 为什么还要保留这层包装而不是直接写 "/samples/x.jpg"：
+//   1. 一旦又回到项目站（子路径）部署，只改 astro.config.mjs 的 base，页面代码不用动；
+//   2. Astro 7 的 import.meta.env.BASE_URL 实测返回的是 base 选项原值，**结尾不带斜杠**
+//      （实测 "/Pillow-cn"），直接拼接会得到 "/Pillow-cnfavicon.svg"，
+//      所以这里统一先去尾再拼，base 写成 "/"、"/x"、"/x/" 都成立。
+// public/ 里的文件不过打包器，引用它们必须走这个函数。
 
 const BASE = import.meta.env.BASE_URL.replace(/\/+$/, "");
 

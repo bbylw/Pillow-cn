@@ -118,14 +118,14 @@ bun install
 python scripts/build_assets.py      # 生成八张运算输出（母题由 assets/brand/make_svg.py 产出）
 python scripts/prepare_images.py    # 裁切页面用图
 bun run build
-portless --script preview           # → https://pillow-cn.localhost/Pillow-cn/
+portless --script preview           # → https://pillow-cn.localhost/
 ```
 
 门禁：
 
 ```bash
 node <frontend-studio>/scripts/lint.mjs dist/index.html
-node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/Pillow-cn/
+node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/
 ```
 
 ---
@@ -135,21 +135,39 @@ node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/Pillow-cn
 | 项 | 值 |
 | --- | --- |
 | 仓库 | https://github.com/bbylw/Pillow-cn（public，初始提交 58 个文件 / 19.4 MiB） |
-| 站点 | https://bbylw.github.io/Pillow-cn/ → 实际 301 到 **https://w404.nyc.mn/Pillow-cn/** |
-| 方式 | GitHub Pages「项目站」，`build_type: workflow`，由 Actions 构建发布 |
+| 站点 | **https://pillow.ndjp.net/**（自定义域名，站点在域名根） |
+| 旧地址 | `https://bbylw.github.io/Pillow-cn/` 现在 301 到上面这个域名 |
+| 方式 | GitHub Pages，`build_type: workflow`，由 Actions 构建发布 |
 | 工作流 | `.github/workflows/deploy.yml`（push 到 main 触发，也可手动 `workflow_dispatch`） |
-| 首次运行 | 成功，build 与 deploy 各约 48s |
+| 自定义域名 | `public/CNAME` 里写 `pillow.ndjp.net`，随构建进 `dist/`，发布时由它写进 Pages 设置 |
 
-**子路径是这里唯一的坑。** 项目站落在 `/Pillow-cn/` 之下，`public/` 里的文件不经打包器，
-写根绝对路径会在线上 404。处理方式：`astro.config.mjs` 设 `base: "/Pillow-cn"`，
-所有 public 资源统一走 `src/lib/base.ts` 的 `asset()`。
+### 为什么 base 是 `/`
 
-注意 Astro 7 的 `import.meta.env.BASE_URL` 返回 `"/Pillow-cn"`，**结尾没有斜杠**
-（文档说会规范化，实测没有），所以 `asset()` 先 `replace(/\/+$/, "")` 再拼，
-`base` 写成带斜杠或不带斜杠都成立。
+GitHub Pages 给**项目站**配上自定义域名后，站点是从**域名根**提供的，不是在
+`https://pillow.ndjp.net/Pillow-cn/` 之下 —— 原有的项目站子路径由 GitHub 301 掉。
+所以 `astro.config.mjs` 只设 `site: "https://pillow.ndjp.net"`，**不设 `base`**。
 
-线上逐个资源验过：首页与它引用的 17 个绝对路径（CSS、12 张图、favicon、母题 SVG、
-样图、视频与海报帧）全部 200；行内 `--motif` 与客户端 bundle 里的前缀都正确。
-`w404.nyc.mn` 是本账号 Pages 的默认域名（本仓库 Pages 设置里 `cname` 为空），
-如果要换成自己的域名（例如 `pillow.ndjp.net`），加 CNAME 记录 + 在本仓库设置自定义域名即可，
-`base` 不用改——换了域名路径仍然是 `/Pillow-cn/`；只有把站提到域名根目录时才要把它改成 `/`。
+顺带一提，之前的 `w404.nyc.mn/Pillow-cn/`（本账号 Pages 的默认域名）也随之让位，
+再访问会跳到 `pillow.ndjp.net`。
+
+### 子路径这个坑仍然写在代码里
+
+`public/` 里的文件（favicon、样图、视频、母题遮罩 SVG）不经打包器，引用它们一律走
+`src/lib/base.ts` 的 `asset()`。现在 base 是 `/`，`asset("favicon.svg")` 得到
+`/favicon.svg`；哪天再回到子路径部署，只改 `astro.config.mjs` 一处，页面代码不用动。
+
+还有一个实测与文档不符的点：Astro 7 的 `import.meta.env.BASE_URL` 返回的是 base 选项
+**原值**，结尾**不带斜杠**（实测 `"/Pillow-cn"`，文档说会规范化）。直接拼接会得到
+`/Pillow-cnfavicon.svg`，所以 `asset()` 先 `replace(/\/+$/, "")` 再拼。
+
+### 线上复核
+
+首页与它引用的 17 个绝对路径（CSS、12 张图、favicon、母题 SVG、样图、webm 与海报帧）
+在 `pillow.ndjp.net` 上全部 200；行内 `--motif` 与客户端 bundle 里的前缀都正确。
+本地预览与线上同一形态：**https://pillow-cn.localhost/**。
+
+### DNS
+
+`pillow.ndjp.net` 在 ndjp.net 上解析到 GitHub Pages 的四个 A 记录
+（185.199.108.153 / .109 / .110 / .111），与 `deno.ndjp.net` 同一套。证书由 GitHub 自动签发。
+
