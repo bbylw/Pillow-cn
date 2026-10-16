@@ -135,20 +135,30 @@ node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/
 | 项 | 值 |
 | --- | --- |
 | 仓库 | https://github.com/bbylw/Pillow-cn（public，初始提交 58 个文件 / 19.4 MiB） |
-| 站点 | **https://pillow.ndjp.net/**（自定义域名，站点在域名根） |
-| 旧地址 | `https://bbylw.github.io/Pillow-cn/` 现在 301 到上面这个域名 |
+| 站点 | **https://pillow.ndjp.net/**（自定义域名，站点在域名根，已强制 HTTPS） |
+| 旧地址 | `https://bbylw.github.io/Pillow-cn/` 与 `https://w404.nyc.mn/Pillow-cn/` 都 301 到这里 |
 | 方式 | GitHub Pages，`build_type: workflow`，由 Actions 构建发布 |
 | 工作流 | `.github/workflows/deploy.yml`（push 到 main 触发，也可手动 `workflow_dispatch`） |
-| 自定义域名 | `public/CNAME` 里写 `pillow.ndjp.net`，随构建进 `dist/`，发布时由它写进 Pages 设置 |
+| 证书 | Let's Encrypt，`CN=pillow.ndjp.net`，GitHub 自动签发，2027-01-14 到期 |
+
+### 自定义域名要显式设置，光放 CNAME 文件不够
+
+`public/CNAME`（内容 `pillow.ndjp.net`）会随构建进 `dist/`，但**在 Actions 产物这条链路上
+GitHub 不会读它来设置自定义域名** —— 那是「从分支发布」旧方式的产物。实测发布完
+`cname` 仍是 `null`、域名没生效。必须显式设一次：
+
+```bash
+gh api -X PUT repos/bbylw/Pillow-cn/pages -f cname=pillow.ndjp.net
+gh api -X PUT repos/bbylw/Pillow-cn/pages -F https_enforced=true   # 等证书 approved 后再开
+```
+
+`public/CNAME` 保留着，一是跟随主流做法，二是万一以后切回分支发布能直接用。
 
 ### 为什么 base 是 `/`
 
 GitHub Pages 给**项目站**配上自定义域名后，站点是从**域名根**提供的，不是在
 `https://pillow.ndjp.net/Pillow-cn/` 之下 —— 原有的项目站子路径由 GitHub 301 掉。
 所以 `astro.config.mjs` 只设 `site: "https://pillow.ndjp.net"`，**不设 `base`**。
-
-顺带一提，之前的 `w404.nyc.mn/Pillow-cn/`（本账号 Pages 的默认域名）也随之让位，
-再访问会跳到 `pillow.ndjp.net`。
 
 ### 子路径这个坑仍然写在代码里
 
@@ -163,11 +173,21 @@ GitHub Pages 给**项目站**配上自定义域名后，站点是从**域名根*
 ### 线上复核
 
 首页与它引用的 17 个绝对路径（CSS、12 张图、favicon、母题 SVG、样图、webm 与海报帧）
-在 `pillow.ndjp.net` 上全部 200；行内 `--motif` 与客户端 bundle 里的前缀都正确。
+在 `pillow.ndjp.net` 上全部 200；`http://` 已 301 到 `https://`。
+**门禁直接跑在正式域名上**：`inspect.mjs https://pillow.ndjp.net/` → 三档视口 FINDINGS none，
+`lint.mjs` 0 FAIL / 0 WARN。
 本地预览与线上同一形态：**https://pillow-cn.localhost/**。
 
-### DNS
+### 别名与 DNS
 
 `pillow.ndjp.net` 在 ndjp.net 上解析到 GitHub Pages 的四个 A 记录
-（185.199.108.153 / .109 / .110 / .111），与 `deno.ndjp.net` 同一套。证书由 GitHub 自动签发。
+（185.199.108.153 / .109 / .110 / .111），与 `deno.ndjp.net` 同一套。
+
+| 入口 | 行为 |
+| --- | --- |
+| `https://pillow.ndjp.net/` | 200，正式地址 |
+| `http://pillow.ndjp.net/` | 301 → `https://` |
+| `https://bbylw.github.io/Pillow-cn/` | 301 → `https://pillow.ndjp.net/` |
+| `https://w404.nyc.mn/Pillow-cn/` | 301 → `https://pillow.ndjp.net/`（账号默认域名让位） |
+
 
