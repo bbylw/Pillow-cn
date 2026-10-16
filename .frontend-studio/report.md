@@ -93,6 +93,22 @@ ROUND 3
 
 复跑门禁：`lint.mjs` 0 FAIL / 0 WARN；`inspect.mjs` 在 1440 / 768 / 390 三档下 FINDINGS none。
 
+### 第五轮：用户截图抓到的「行内代码看不见」
+
+看截图时发现收尾那一节的 `from PIL import Image` 读不出来：**深绿色字落在深绿色小块上，对比度 1.21:1**。
+原因是 `code` 只设了底色（`--color-surface`）没设颜色，于是继承了外层金色 section 的字色
+（`--color-accent-ink`）。同一个类别的隐患在别处没有——`scripts/audit_contrast.mjs` 整页扫过一遍，
+全文只有这一处低于 4.5:1。
+
+改法：`code` 把颜色也一起设掉（`--color-ink`，金对深绿 7.4:1），三种底（页面深绿、演示节深面板、
+收尾金）都成立；另外加 `white-space: nowrap`，小块不再从短语中间断成两截，
+`.close__cmd` 是长命令、把 nowrap 收回来并保留 `overflow-wrap: anywhere`。
+
+`inspect.mjs` 量不出这一类：探针按文字颜色对**所在区块**的背景算对比度，而小块自己的底色不在任何
+区块上；它还把 `<code>` 里的文字当代码语境放过。所以补了 `scripts/audit_contrast.mjs` ——
+从每个文字节点往上找第一个不透明背景（**含元素自身**），算真实对比度，列所有低于 4.5:1 的。
+建议以后每次改完都跑一遍，几秒钟。
+
 前两轮已修掉的：标题块下方 222px 的空洞（改为深色色块 + 一句说明并居中）、
 `.rtable` 表头被读成眉标、拼版标题在窄格里的溢出、`.tile--accent` 缺背景导致的 1.2:1 对比度、
 `--color-muted` 提到 `#bcae66`、手机端母题被裁成一条、平板端母题压住标题。
@@ -141,6 +157,7 @@ portless --script preview           # → https://pillow-cn.localhost/
 ```bash
 node <frontend-studio>/scripts/lint.mjs dist/index.html
 node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/
+node scripts/audit_contrast.mjs            # 对比度自查，补 inspect 看不到的那一类
 ```
 
 ---

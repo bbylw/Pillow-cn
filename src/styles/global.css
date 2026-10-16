@@ -169,11 +169,16 @@ h2 {
   margin-top: 0.85em;
 }
 
+/* 行内代码小块。它自带底色，所以颜色也必须自带 —— 收尾那一节是金色底、
+   继承过来的字是深绿色，落在深绿色小块上对比度只有 1.27:1，等于看不见。
+   另外不许在短语中间折行：小块断成两截更难认。 */
 code {
   font-family: inherit;
   font-weight: 500;
+  color: var(--color-ink);
   background: var(--color-surface);
   padding: 0.08em 0.34em;
+  white-space: nowrap;
 }
 
 .figure-credit {
@@ -898,10 +903,12 @@ code {
   margin-bottom: 0.9em;
 }
 
+/* 长命令要能折行，把 code 上的 nowrap 收回来 */
 .close__cmd {
   display: block;
   font-size: var(--step-body);
   font-weight: 500;
+  white-space: normal;
   background: rgba(255, 255, 255, 0.07);
   padding: 0.7em 0.85em;
   margin-bottom: 0.5rem;
