@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+*.log
+
+# 构建缓存
+.vite/
+*.tsbuildinfo
+
+# 本机代理的内部状态（工作记忆、技能产物），不进公开仓库
+.workbuddy/
+
+# 复看用的截图，体积大且随时可用 inspect.mjs 重跑
+.frontend-studio/inspect/
+
+# WorkBuddy 发布描述符，含本机绝对路径，不进仓库
+.wbapp_*.genie

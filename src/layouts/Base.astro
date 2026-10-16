@@ -1,0 +1,67 @@
+---
+import "../styles/global.css";
+import { asset } from "../lib/base";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN" style={`--motif: url("${asset("frame/pillow-frame.svg")}")`}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#133621" />
+    <link rel="icon" href={asset("favicon.svg")} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Stack+Sans+Headline:wght@300&family=Stack+Sans+Text:wght@400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      // 章节入场：标题 → 正文 → 图片，逐个错开，各触发一次。
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.add("is-in");
+            io.unobserve(entry.target);
+          }
+        },
+        { rootMargin: "0px 0px -10% 0px", threshold: 0.08 },
+      );
+
+      document.querySelectorAll<HTMLElement>("[data-reveal]").forEach((el) => {
+        const group = el.parentElement;
+        const index = group
+          ? Array.from(group.querySelectorAll("[data-reveal]")).indexOf(el)
+          : 0;
+        el.style.setProperty("--d", `${Math.min(index, 3) * 80}ms`);
+        io.observe(el);
+      });
+
+      // 一段静音循环只是装饰：开了减弱动效就停住海报帧。
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.querySelectorAll<HTMLVideoElement>("video[autoplay]").forEach((video) => {
+          video.autoplay = false;
+          video.removeAttribute("autoplay");
+          video.pause();
+        });
+      }
+    </script>
+  </body>
+</html>

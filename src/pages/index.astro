@@ -1,0 +1,424 @@
+---
+import Base from "../layouts/Base.astro";
+import LiveDemo from "../components/LiveDemo.tsx";
+import { Image } from "astro:assets";
+import { asset } from "../lib/base";
+import { MOTIF_PATH, MOTIF_VIEWBOX } from "../data/motif";
+
+import opOpen from "../assets/ops/open.jpg";
+import opGray from "../assets/ops/grayscale.jpg";
+import opInvert from "../assets/ops/invert.jpg";
+import opBlur from "../assets/ops/blur.jpg";
+import opPosterize from "../assets/ops/posterize.jpg";
+import opPixelate from "../assets/ops/pixelate.jpg";
+import opMirror from "../assets/ops/mirror.jpg";
+import opEnhance from "../assets/ops/enhance.jpg";
+import filmBand from "../assets/film-band.jpg";
+import crtShot from "../assets/crt-shot.jpg";
+import lichensShot from "../assets/lichens.jpg";
+import mossShot from "../assets/moss.jpg";
+
+const LINKS = {
+  install: "https://pillow.readthedocs.io/en/stable/installation/basic-installation.html",
+  docs: "https://pillow.readthedocs.io/",
+  repo: "https://github.com/python-pillow/Pillow",
+};
+
+/* 八块版 —— 每块是一张真实照片经 Pillow 运算后的输出，素材由 scripts/build_assets.py 生成 */
+const CAPS = [
+  { img: opOpen, slot: "t-open", tone: "", name: "打开", note: "读入文件，惰性解码", code: "Image.open()" },
+  { img: opGray, slot: "t-gray", tone: "", name: "灰度", note: "丢掉颜色，只留亮度", code: "ImageOps.grayscale()" },
+  { img: opInvert, slot: "t-invert", tone: "tile--accent", name: "反相", note: "每个通道取反", code: "ImageOps.invert()" },
+  { img: opBlur, slot: "t-small", tone: "", name: "模糊", note: "高斯核，半径可调", code: "GaussianBlur()" },
+  { img: opPosterize, slot: "t-small", tone: "", name: "色调分离", note: "每通道压到几位", code: "posterize()" },
+  { img: opPixelate, slot: "t-small", tone: "", name: "像素化", note: "降采样再放大", code: "Image.resize()" },
+  { img: opMirror, slot: "t-small", tone: "", name: "镜像", note: "左右翻转", code: "ImageOps.mirror()" },
+  { img: opEnhance, slot: "t-enhance", tone: "tile--accent", name: "增强", note: "先提对比，再锐化", code: "ImageEnhance" },
+];
+
+const FORMATS = [
+  { name: "JPEG", read: "支持", write: "支持", note: "有损压缩，最通用" },
+  { name: "PNG", read: "支持", write: "支持", note: "无损，支持透明度" },
+  { name: "GIF", read: "支持", write: "支持", note: "支持动画与调色板" },
+  { name: "WebP", read: "支持", write: "支持", note: "支持动画与透明" },
+  { name: "TIFF", read: "支持", write: "支持", note: "支持多页" },
+  { name: "BMP", read: "支持", write: "支持", note: "Windows 位图，通常不压缩" },
+  { name: "ICO", read: "支持", write: "支持", note: "多尺寸图标" },
+  { name: "PSD", read: "支持", write: "不支持", note: "可读取 Photoshop 图层" },
+];
+
+/* 机构与它们各自做的事，拼成一句话（proof 槽位重画后的构图） */
+const BACKERS = [
+  "Tidelift 从 2018 年起协调安全修复与披露",
+  "Thanks.dev 按依赖的比例分配捐赠",
+  "GitHub Sponsors 让维护者直接收到赞助",
+  "OpenSSF 提供工程与安全规范",
+  "OSS-Fuzz 在社区自己的机器上持续跑模糊测试",
+  "Zenodo 给每个发行版一个 DOI",
+  "PyPI 把包送到你手上",
+];
+
+const BACKER_LINE = `${BACKERS.join("，")}。`;
+
+const FAQ = [
+  {
+    q: "Pillow 和 PIL 是什么关系？",
+    a: "Pillow 是 PIL 的活跃分支。PIL 由 Fredrik Lundh 在 1995 年写出，最后一个版本发布于 2009 年；2010 年 Jeffrey 'Alex' Clark 把它接续下来，取名 Pillow，维护至今。导入路径仍然是 from PIL import Image，旧代码一行都不用改。",
+  },
+  {
+    q: "怎么安装，需要自己编译吗？",
+    a: "先升级 pip，再安装：python3 -m pip install --upgrade pip，然后 python3 -m pip install --upgrade Pillow。主流平台都有预编译的 wheel，常用的解码库已经打包在内，不需要自己编译；只有少数格式要在系统里另行安装依赖。",
+  },
+  {
+    q: "打开一张图要写什么？",
+    a: "两行：from PIL import Image，然后 im = Image.open(\"photo.jpg\")。返回的 Image 对象是惰性的，只有真正读取像素或做转换时才会解码。",
+  },
+  {
+    q: "怎么存成另一种格式？",
+    a: "im.save(\"photo.png\")，格式由扩展名推断，也可以用 format=\"PNG\" 显式指定；有损格式还能用 quality 参数控制质量。",
+  },
+  {
+    q: "大图会不会很占内存？",
+    a: "像素会在内存里展开，尺寸越大占用越多。读 JPEG 时用 draft() 让解码器直接降采样，或者用 thumbnail() 生成缩略图，都能把占用压下来。",
+  },
+  {
+    q: "支持哪些 Python 版本？",
+    a: "Pillow 为当前仍在维护的 Python 3 版本提供 wheel，并随 Python 的版本节奏一起更新，不支持的旧版本不再发布二进制包。",
+  },
+  {
+    q: "许可证是什么？",
+    a: "宽松的 MIT-CMU 许可证，和 PIL 一致：可以自由地用于商业项目与再分发，只需在副本中保留版权声明。",
+  },
+  {
+    q: "怎么参与贡献？",
+    a: "先看仓库里的 CONTRIBUTING 指南，再从标记为需要帮助的 issue 入手，提交拉取请求即可。文档改动和示例同样是贡献。",
+  },
+  {
+    q: "发现安全漏洞怎么报告？",
+    a: "通过 GitHub 的私密安全通道提交，不要公开。如果无法使用 GitHub，可以联系 Tidelift 的安全渠道，由它来协调修复与披露。",
+  },
+];
+
+/* 三步图：同一批圆点，从左到右从散乱压成一条带、再排成整齐的行。
+   点位由固定种子算出，每次构建完全一致。 */
+let seed = 20261016;
+const rand = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
+
+const dots: { x: number; y: number; r: number; tone: string }[] = [];
+
+for (let i = 0; i < 42; i++) {
+  dots.push({
+    x: 24 + rand() * 350,
+    y: 22 + rand() * 216,
+    r: rand() > 0.5 ? 5.5 : 4.5,
+    tone: rand() > 0.45 ? "var(--color-muted)" : "var(--color-keyline)",
+  });
+}
+for (let row = 0; row < 3; row++) {
+  for (let i = 0; i < 16; i++) {
+    dots.push({ x: 430 + i * 21.5, y: 92 + row * 22, r: 5.5, tone: "var(--color-ink)" });
+  }
+}
+for (let row = 0; row < 6; row++) {
+  for (let i = 0; i < 10; i++) {
+    dots.push({ x: 812 + i * 40, y: 46 + row * 34, r: 5, tone: "var(--color-accent)" });
+  }
+}
+---
+
+<Base
+  title="Pillow —— Python 图像处理库"
+  description="Pillow 是 PIL 的友好分支：用 Python 打开、转换并保存图像。这个中文页面介绍了它的能力、支持的格式、安装方式与常见问题。"
+>
+  <a class="skip" href="#main">跳到主要内容</a>
+
+  <main id="main">
+    <!-- 1 ── 首屏：一块颜色，一个巨大的母题剪影，两行字 -->
+    <section class="hero">
+      <div class="masthead">
+        <a class="masthead__brand" href="#main">Pillow</a>
+        <nav class="masthead__nav" aria-label="主要链接">
+          <a class="link-plain" href={LINKS.docs} rel="noopener">文档</a>
+          <a class="link-plain" href={LINKS.repo} rel="noopener">GitHub</a>
+          <a class="btn" href={LINKS.install} rel="noopener">安装 Pillow</a>
+        </nav>
+      </div>
+
+      <!-- 母题在首屏是巨大剪影，从右侧进入，被视口裁切 -->
+      <svg class="hero__motif" viewBox={MOTIF_VIEWBOX} aria-hidden="true" focusable="false">
+        <path d={MOTIF_PATH} fill="currentColor" fill-rule="nonzero"></path>
+      </svg>
+
+      <div class="hero__stack">
+        <h1 class="hero__title">
+          <span>Pillow</span>
+          <span>图像处理库</span>
+        </h1>
+        <p class="hero__support">PIL 的友好分支：用 Python 打开、转换并保存图像。</p>
+        <a class="btn" href={LINKS.install} rel="noopener">安装 Pillow</a>
+      </div>
+    </section>
+
+    <!-- 2 ── 能力拼版：八块，每块是一次真实运算的输出 -->
+    <section class="caps" aria-labelledby="caps-title">
+      <div class="caps__board">
+        <div class="tile tile--heading t-heading">
+          <h2 id="caps-title">它能做什么</h2>
+          <p>同一张照片，跑八次真实运算；括号里就是 Pillow 的那一行。</p>
+        </div>
+
+        {CAPS.map((c, i) => (
+          <div class={`tile ${c.slot} ${c.tone}`}>
+            <div class="tile__stage">
+              <div class="tile__frame framed" data-reveal style={`--d:${i * 45}ms`}>
+                <Image src={c.img} alt={`一张照片经 ${c.name} 处理后的结果`} loading="lazy" decoding="async" />
+              </div>
+            </div>
+            <div class="tile__cap">
+              <b>{c.name}</b>
+              <span>{c.note} · {c.code}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- 3 ── 满幅照片带：把页面切成两半 -->
+    <figure class="band">
+      <Image src={filmBand} alt="成堆的 135 胶卷暗盒，来自不同品牌，堆在一起" loading="lazy" decoding="async" />
+      <figcaption class="band__credit">照片：Petar Milošević，CC BY-SA 4.0，来自 Wikimedia Commons</figcaption>
+    </figure>
+
+    <!-- 4 ── 现场试一试：活的演示 -->
+    <LiveDemo client:visible />
+
+    <!-- 5 ── 一张图，三步 -->
+    <section class="steps" aria-labelledby="steps-title">
+      <h2 class="steps__head" id="steps-title" data-reveal>一张图，三步</h2>
+
+      <svg
+        class="steps__diagram"
+        viewBox="0 0 1200 260"
+        role="img"
+        aria-label="示意图：散乱的点先被压成一条整齐的带，再排成一列列规整的行"
+        data-reveal
+        style="--d:80ms"
+      >
+        {dots.map((d) => (
+          <circle cx={d.x.toFixed(1)} cy={d.y.toFixed(1)} r={d.r} fill={d.tone} />
+        ))}
+      </svg>
+
+      <div class="steps__legend">
+        <div data-reveal style="--d:0ms">
+          <b>打开</b>
+          <p><code>Image.open()</code> 读入文件，惰性解码，直到你真正动到像素。</p>
+        </div>
+        <div data-reveal style="--d:80ms">
+          <b>处理</b>
+          <p>缩放、裁剪、调色、滤镜、绘制，一次一个函数，工作几乎都在这里。</p>
+        </div>
+        <div data-reveal style="--d:160ms">
+          <b>保存</b>
+          <p><code>im.save()</code> 写出，格式由扩展名或 format 参数决定。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 ── 它认识的格式：全幅表，只有一个字号 -->
+    <section class="registry" aria-labelledby="fmt-title">
+      <h2 class="registry__head" id="fmt-title" data-reveal>它认识的格式</h2>
+      <table class="rtable" data-reveal style="--d:80ms">
+        <caption class="sr-only">Pillow 对几种常见图像格式的读取与写入支持</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="c-name">格式</th>
+            <th scope="col" class="c-yn">读取</th>
+            <th scope="col" class="c-yn">写入</th>
+            <th scope="col" class="c-note">说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          {FORMATS.map((f) => (
+            <tr>
+              <th scope="row" class="c-name">{f.name}</th>
+              <td class="c-yn">{f.read}</td>
+              <td class="c-yn">{f.write}</td>
+              <td class="c-note">{f.note}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="registry__foot" data-reveal style="--d:160ms">
+        以上只是最常见的几种，Pillow 还支持一大批其它图像格式，具体以官方文档的格式列表为准。
+      </p>
+    </section>
+
+    <!-- 7 ── 从 1995 年续写至今：内嵌深色面板 + 母题取景框 -->
+    <section class="origin" aria-labelledby="origin-title">
+      <div class="origin__left">
+        <h2 id="origin-title" data-reveal>从 1995 年续写至今</h2>
+        <figure class="origin__shot" data-reveal style="--d:80ms">
+          <div class="framed">
+            <Image
+              src={crtShot}
+              alt="1988 年出品的 Olivetti M200 台式电脑，带 CRT 显示器与键盘"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <figcaption class="figure-credit">照片：ValorosoIT，CC BY-SA 4.0，来自 Wikimedia Commons</figcaption>
+        </figure>
+      </div>
+
+      <div class="origin__right">
+        <div class="origin__block" data-reveal style="--d:120ms">
+          <b>PIL</b>
+          <p>1995 年由 Fredrik Lundh 写出，最后一个版本停在 2009 年。许可证宽松，但代码停更了。</p>
+        </div>
+        <div class="origin__block" data-reveal style="--d:200ms">
+          <b>Pillow</b>
+          <p>2010 年 Jeffrey 'Alex' Clark 把它接过来，取名 Pillow，继续在同一个导入路径下维护。</p>
+        </div>
+        <p class="origin__action" data-reveal style="--d:280ms">
+          <a class="btn" href="https://pillow.readthedocs.io/en/stable/releasenotes/index.html" rel="noopener">
+            读更新日志
+          </a>
+        </p>
+      </div>
+    </section>
+
+    <!-- 8 ── 谁在背后支持 -->
+    <section class="backers" aria-labelledby="backers-title">
+      <h2 class="sr-only" id="backers-title">谁在背后支持</h2>
+      <p class="backers__line" data-reveal>{BACKER_LINE}</p>
+      <p class="backers__note" data-reveal style="--d:80ms">
+        资金、基础设施与安全流程各有人负责：商业支持来自 Tidelift，捐赠由 Thanks.dev 按依赖比例分配，模糊测试跑在社区自己的机器上。
+      </p>
+    </section>
+
+    <!-- 9 ── 真实世界的图像：一段会动的画面 + 两张照片 -->
+    <section class="plate" aria-labelledby="plate-title">
+      <h2 class="sr-only" id="plate-title">真实世界的图像</h2>
+      <div class="plate__row">
+        <figure class="framed" data-reveal>
+          <video
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            width="900"
+            height="900"
+            poster={asset("media/larva-moss-poster.jpg")}
+            aria-label="一段苔藓上尺蠖爬行的循环短片"
+          >
+            <source src={asset("media/larva-moss.webm")} type="video/webm" />
+          </video>
+        </figure>
+        <figure class="framed" data-reveal style="--d:80ms">
+          <Image src={lichensShot} alt="森林地表闪着光的苔藓、地衣与草叶，缀满水珠" loading="lazy" decoding="async" />
+        </figure>
+        <figure class="framed" data-reveal style="--d:160ms">
+          <Image src={mossShot} alt="佛蒙特林地里长满苔藓的松树桩" loading="lazy" decoding="async" />
+        </figure>
+      </div>
+      <p class="figure-credit plate__copy">
+        视频：Pristurus，CC BY-SA 3.0。照片：Extemporalist，CC0；Paul Harrison，CC BY-SA 4.0。均来自 Wikimedia Commons
+      </p>
+    </section>
+
+    <!-- 10 ── 常见问题 -->
+    <section class="faq" aria-labelledby="faq-title">
+      <h2 class="faq__head" id="faq-title" data-reveal>常见问题</h2>
+      <div class="faq__list">
+        {FAQ.map((item, i) => (
+          <details class="qa" name="pillow-faq" open={i === 0} data-reveal style={`--d:${(i % 3) * 60}ms`}>
+            <summary>
+              <span>{item.q}</span>
+              <span class="qa__sign" aria-hidden="true"></span>
+            </summary>
+            <p class="qa__answer">{item.a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <!-- 11 ── 收尾：第一步已经开着 -->
+    <section class="close" aria-labelledby="close-title">
+      <div>
+        <h2 class="close__line" id="close-title">
+          <span>把图像</span>
+          <span>交给 Python</span>
+        </h2>
+        <p class="close__say">一条命令装好，之后 <code>from PIL import Image</code> 就能用了。</p>
+      </div>
+
+      <div class="close__box">
+        <p>在终端里运行</p>
+        <code class="close__cmd">python3 -m pip install --upgrade Pillow</code>
+        <p>装好之后，打开一张图只要两行：</p>
+        <code class="close__cmd">from PIL import Image</code>
+        <a class="btn" href={LINKS.install} rel="noopener">安装 Pillow</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚：把母题放大当版记 -->
+  <footer class="footer">
+    <div class="footer__close">
+      <svg
+        class="footer__mark"
+        viewBox={MOTIF_VIEWBOX}
+        role="img"
+        aria-label="Pillow 标识轮廓"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <path d={MOTIF_PATH} fill="currentColor" fill-rule="nonzero"></path>
+      </svg>
+
+      <div class="footer__cols">
+      <div class="footer__col">
+        <p>项目</p>
+        <ul>
+          <li><a href={LINKS.repo} rel="noopener">Pillow 仓库</a></li>
+          <li><a href="https://github.com/python-pillow/Pillow/graphs/contributors" rel="noopener">贡献者</a></li>
+          <li><a href="https://github.com/python-pillow/Pillow/blob/main/LICENSE" rel="noopener">MIT-CMU 许可证</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <p>文档</p>
+        <ul>
+          <li><a href={LINKS.docs} rel="noopener">文档首页</a></li>
+          <li><a href={LINKS.install} rel="noopener">安装</a></li>
+          <li><a href="https://pillow.readthedocs.io/en/latest/handbook/index.html" rel="noopener">手册</a></li>
+          <li><a href="https://pillow.readthedocs.io/en/stable/releasenotes/index.html" rel="noopener">发布说明</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <p>代码</p>
+        <ul>
+          <li><a href="https://github.com/python-pillow/Pillow/issues" rel="noopener">问题反馈</a></li>
+          <li><a href="https://github.com/python-pillow/Pillow/pulls" rel="noopener">拉取请求</a></li>
+          <li><a href="https://github.com/python-pillow/Pillow/blob/main/.github/CONTRIBUTING.md" rel="noopener">贡献指南</a></li>
+          <li><a href="https://github.com/python-pillow/Pillow/releases" rel="noopener">更新日志</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <p>联系</p>
+        <ul>
+          <li><a href="https://github.com/python-pillow/Pillow/security/advisories/new" rel="noopener">报告安全漏洞</a></li>
+          <li><a href="https://tidelift.com/security" rel="noopener">Tidelift 安全渠道</a></li>
+          <li><a href="https://gitter.im/python-pillow/Pillow" rel="noopener">社区聊天</a></li>
+          <li><a href="https://fosstodon.org/@pillow" rel="noopener">Mastodon</a></li>
+        </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer__legal">
+      <span>© 2010–2026 Pillow 贡献者，MIT-CMU 许可证</span>
+      <span>本站为中文介绍页，文字译自项目 README，不是官方站点</span>
+    </div>
+  </footer>
+</Base>

@@ -1,0 +1,129 @@
+# 交付说明 — Pillow 中文站
+
+按 `frontend-studio` 流程（步骤 1–10）构建。技术栈：Astro 7.4 + TypeScript 6 + React 19（岛）+ Tailwind CSS 4 + Bun 1.4。
+
+---
+
+## 1 抽到的方向
+
+| 项 | 值 |
+| --- | --- |
+| 方向 | `one-motif`（One motif） |
+| seed | `1594594709` |
+| 抽发日期 | 2026-10-16 |
+| surface | `page` |
+| allow | `[]`（没有为任何规则申请豁免） |
+
+**重抽 1 次。** 第一次抽到的是 `type-only-statement`——按它自己的说明，这是「一个没有被拍摄价值的主题」才该用的方向；而 Pillow 的主题恰恰就是图像本身。抽第一次时输入里 `have: ["product-ui"]`，也就是那张设定表以为手头只有一个界面片段，而实际上项目里有 6 张真实照片和 1 段视频。补完素材后重抽，得到 `one-motif`。
+
+## 2 一句话的想法
+
+> 在页面上，**Pillow 自己标识的轮廓**成为**每一张照片的遮罩**。
+
+母题不是自画的插画，是从官方标识 `python-pillow/pillow-logo` 的 alpha 通道里量出来的几何：两个圆角矩形求并集（竖条 x 0.25–0.75 全高，横条 y 0.23–0.77 全宽，圆角 0.20W），挖掉两个圆孔（单位坐标 `(0.3669,0.1300) r=0.0212` 与 `(0.6270,0.8580) r=0.0222`）。拟合 IoU **0.9578**。
+
+- 计算脚本：`assets/brand/trace.py`（定位圆孔）、`fit.py`（拟合几何）、`make_svg.py`（一次产出两处，永不漂移）
+- 产出：`public/frame/pillow-frame.svg`（CSS mask 用）与 `src/data/motif.ts`（行内 SVG 用，`MOTIF_PATH` / `MOTIF_VIEWBOX`）
+
+同一形状在整页按四种尺度复用：首屏 120vh 的整块剪影、每张照片的遮罩、演示画布的外框、页脚的小标识。母题只用一个平涂色，没有渐变。
+
+## 3 现场的东西（live thing）
+
+`src/components/LiveDemo.tsx`——一个真的会跑的浏览器内图像处理：
+
+- 两张样图（苔藓 / 胶卷）可切换
+- 八种运算：原图、灰度、反相、模糊、色彩分离、像素化、左右翻转
+- 每个运算都做真实的逐像素运算（`boxBlur`、`0.299/0.587/0.114` 灰度、两遍 canvas 像素化、`posterize` 量化、transform 镜像）
+- `导出 PNG` 真的把当前画面存下来
+- 标题随选中的运算变化，并同步显示这一步在 Pillow 里的那一行调用
+
+## 4 门禁
+
+```
+lint.mjs    dist/index.html   → 0 FAIL, 0 WARN
+inspect.mjs http://127.0.0.1:4321/ → FINDINGS none
+```
+
+| 指标 | 1440px | 768px | 390px |
+| --- | --- | --- | --- |
+| 排版级数 | 14 / 18 / 30 / 58 / 100（5 级） | 6 级 | 6 级 |
+| 字体家族 | 2（Stack Sans Text 91% / Headline 9%） | 2 | 2 |
+| 正文 | 18px / 1.55 / 对比度 9.5 | 17.5px | 16.5px |
+| 标题最多行数 | 2 | 2 | 2 |
+| 真实图片 | 13 张 + 1 段视频 | 13 + 1 | 13 + 1 |
+| 动效元素 | 37（+1 段播放中视频） | 35 | 37 |
+| 横向溢出 | 0 | 0 | 0 |
+| 渐变 / 静态阴影 / 细线 / 圆角媒体 | 0 / 0 / 0 / 0 | 同 | 同 |
+| 眉标 / 装饰序号 / 控制台报错 | 0 / 0 / 无 | 同 | 同 |
+
+## 5 复看截图后的评分（第 3 轮，最后一轮）
+
+```
+ROUND 3
+一眼看到：一块金色的、像枕头的形状，边上压着深绿。
+想法（一句）：Pillow 标识的轮廓，成了每一张照片的裁切框。
+现场的东西：浏览器里跑的真实像素运算，八种，能导出 PNG。
+版式词（逐节）：hero=剪影裂开 / caps=马赛克 / band=满幅带 / demo=双栏工作台 /
+               steps=图解+三列 / registry=表格 / origin=深色面板左右分栏 /
+               backers=一句话陈述 / plate=一方两竖 / faq=折叠列表 / close=满幅色块
+评分：design 7.5 · usability 8.5 · creativity 8 · content 8.5 → overall 8.0
+生效的上限：无（0 FAIL；无三行标题、无眉标、无渐变、无静态阴影；真实图片 13 张；
+           动效 37 个元素，远超下限 8；首屏有真按钮）
+仍然不够（按可见度排序）：
+1. 演示节（desktop-page-01 右下 / page-02 左上）两栏下面留了一条很宽的空地，
+   这一屏是整页最安静的一屏，地面铺得有点长。
+   → 改法：把画布与控件面板对齐到同一条基线，并让画布吃掉更多屏。
+2. 能力拼版里八块用的是同一张照片，第二排读起来会觉得重复。
+   → 改法：换两张源图，四种「光调」运算用胶卷、四种「结构」运算用苔藓。
+3. 手机上页头的金色按钮和首屏的金色按钮相距约 200px，两个一模一样。
+   → 改法：页头那一项改成普通文字链接，金色只留给首屏那一个动作。
+```
+
+前两轮已修掉的：标题块下方 222px 的空洞（改为深色色块 + 一句说明并居中）、
+`.rtable` 表头被读成眉标、拼版标题在窄格里的溢出、`.tile--accent` 缺背景导致的 1.2:1 对比度、
+`--color-muted` 提到 `#bcae66`、手机端母题被裁成一条、平板端母题压住标题。
+
+## 6 用到的照片与短片（全部来自 Wikimedia Commons）
+
+| 文件 | 标题 | 作者 | 许可 | 来源 | 页面上署名在哪 |
+| --- | --- | --- | --- | --- | --- |
+| `used-135-film-cartridges.jpg` | Used 135 film cartridges | Petar Milošević | CC BY-SA 4.0 | [commons](https://commons.wikimedia.org/wiki/File:Used_135_film_cartridges.jpg) | 能力拼版正下方的图注；同一张照片的演示样图由演示面板底部的样图署名覆盖 |
+| `olivetti-m200-computer-valorosoit-collection-crt-monitor.jpg` | Olivetti M200 computer, ValorosoIT collection, CRT monitor, keyboard 1 | ValorosoIT | CC BY-SA 4.0 | [commons](https://commons.wikimedia.org/wiki/File:Olivetti_M200_computer,_ValorosoIT_collection,_CRT_monitor,_keyboard_1.jpg) | 「从 1995 年续写至今」图片下方新加的 figcaption |
+| `moss-and-forest-floor-54896355461.jpg` | Moss and forest floor (54896355461) | AS Photography from Poland | CC BY 4.0 | [commons](https://commons.wikimedia.org/wiki/File:Moss_and_forest_floor_(54896355461).jpg) | 演示面板底部的样图署名 |
+| `mosses-lichens-and-grasses-sparkle-on-the.png` | Mosses, Lichens, and Grasses sparkle on the forest floor in Lac La Hache Provincial Park | Extemporalist | CC0 | [commons](https://commons.wikimedia.org/wiki/File:Mosses,_Lichens,_and_Grasses_sparkle_on_the_forest_floor_in_Lac_La_Hache_Provincial_Park.png) | 「真实世界的图像」署名行 |
+| `moss-forest-floor-vermont.jpg` | Moss, Forest Floor, Vermont | Paul Harrison | CC BY-SA 4.0 | [commons](https://commons.wikimedia.org/wiki/File:Moss,_Forest_Floor,_Vermont.jpg) | 「真实世界的图像」署名行 |
+| `larve-2011-09-01.webm` | Larve-2011-09-01 | Pristurus | CC BY-SA 3.0 | [commons](https://commons.wikimedia.org/wiki/File:Larve-2011-09-01.webm) | 「真实世界的图像」署名行 |
+
+完整机读清单（含源 URL、尺寸、字节数、逐条 share-alike 提示）：`assets/credits.json`。
+
+**品牌素材（非展示图）：** `assets/brand/pillow-logo-248x250.png`，来自 `python-pillow/pillow-logo`，只用于量取轮廓几何，页面上不作为图片出现。
+
+## 7 哪些是生成的、哪些在代替摄影
+
+- **是库的真实输出（不是画的）**：`src/assets/ops/*.jpg` 八张——同一张胶卷照片经 Pillow 真实运算得到（`Image.open` / `ImageOps.grayscale` / `ImageOps.invert` / `GaussianBlur` / `posterize` / `resize` / `ImageOps.mirror` / `ImageEnhance`）。生成脚本 `scripts/build_assets.py`。
+- **是照片的派生裁切**：`public/samples/*.jpg`（演示样图）、`src/assets/{film-band,crt-shot,lichens,moss}.jpg`（页面大图）、`public/media/larve-moss-poster.jpg`（视频首帧）。脚本 `scripts/prepare_images.py`。
+- **是绘制（且不代替摄影）**：`steps__diagram`——三步示意图的 150 个圆点，由固定种子 `20261016` 的 LCG 在构建时算出；以及母题剪影本身。这两处都是图解，页面上的照片全部是真实照片与真实短片。
+
+## 8 上线前需要你确认的示例内容
+
+1. **文案来源**：正文是官方 README 与官方文档的中文改写（安装命令、许可证、PIL→Pillow 沿革、格式支持表、九问 FAQ）。数字与调用名照抄官方，措辞是我写的——请过一遍中文。
+2. **`谁在背后支持`** 把 Tidelift / Thanks.dev / GitHub Sponsors / OpenSSF / OSS-Fuzz / Zenodo / PyPI 七家压成一句话，可能会略过各家关心的重点。
+3. **FAQ 第 6 问（支持的 Python 版本）** 只写了原则（跟着仍在维护的 Python 3 版本发 wheel），没写具体版本号，避免过时；如果你希望写死版本，需要加一个定期更新的机制。
+4. **署名文案**：六处署名都按「名称，许可，来自 Wikimedia Commons」的格式写，如果站点要上英文或其他语言的署名规范，需要统一改。
+
+## 9 复现
+
+```bash
+bun install
+python scripts/build_assets.py      # 生成母题遮罩与八张运算输出
+python scripts/prepare_images.py    # 裁切页面用图
+bun run build
+portless --script preview           # → https://pillow-cn.localhost
+```
+
+门禁：
+
+```bash
+node <frontend-studio>/scripts/lint.mjs dist/index.html
+node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/
+```

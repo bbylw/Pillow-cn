@@ -1,0 +1,54 @@
+name: Deploy to GitHub Pages
+
+# 推到 main 即构建并发布；也可以在 Actions 页面手动触发。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GITHUB_TOKEN 的最小权限：读代码、写 Pages、拿 OIDC 令牌做部署校验。
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一次部署；发布中的那一次不打断。
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出仓库
+        uses: actions/checkout@v7
+
+      - name: 装 Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - name: 装依赖（锁文件为准）
+        run: bun install --frozen-lockfile
+
+      # 派生素材（src/assets/ops、public/samples、public/media、src/data/motif.ts、
+      # public/frame/pillow-frame.svg）都已随仓库提交，CI 不需要 Python/Pillow。
+      - name: 构建
+        run: bun run build
+
+      - name: 上传站点产物
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

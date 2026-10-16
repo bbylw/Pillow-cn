@@ -1,0 +1,1176 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Pillow 中文站 · 方向 one-motif（seed 1594594709）
+   母题 = 官方标识轮廓：Python 双蛇交错的圆角十字，自带两个透明圆孔。
+   一个母题，四个尺度：首屏巨大剪影 → 照片取景框 → 按钮边角 → 列表圆点。
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  --color-bg: #133621;
+  --color-surface: #1a4429;
+  --color-panel: #0b2113;
+  --color-ink: #f4d96c;
+  --color-muted: #bcae66;
+  --color-accent: #f4d96c;
+  --color-accent-ink: #133621;
+  --color-keyline: #2c5a3a;
+
+  --font-display: "Stack Sans Headline", "Noto Sans SC", ui-sans-serif, sans-serif;
+  --font-text: "Stack Sans Text", "Noto Sans SC", ui-sans-serif, sans-serif;
+}
+
+:root {
+  /* 五个字号档 —— 页面上不允许出现第六个 */
+  --step-small: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);   /* 13 → 14 */
+  --step-body: clamp(1rem, 0.96rem + 0.28vw, 1.125rem);          /* 16 → 18 */
+  --step-lead: clamp(1.3125rem, 1.1rem + 0.95vw, 1.875rem);      /* 21 → 30 */
+  --step-head: clamp(2.125rem, 1.2rem + 3.7vw, 3.625rem);        /* 34 → 58 */
+  --step-display: clamp(3.625rem, 1.2rem + 9.6vw, 6.25rem);      /* 58 → 100 */
+
+  --margin: clamp(1rem, 2.2vw, 2rem);
+  --gutter: clamp(0.5rem, 1.1vw, 1rem);
+  --block: clamp(7.5rem, 12vw, 13.75rem);   /* 章节之间的间距 120–220 */
+  --radius: 0;                              /* 全页只有一个圆角：直角 */
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-slow: 1.1s;
+  --dur-mid: 0.6s;
+
+  /* 母题：由官方标识的 alpha 拟合出的圆角十字，分辨率无关。
+     值不在这里写死——站点部署在子路径下，路径要经过 BASE_URL，
+     所以由 Base.astro 在 <html> 的行内样式上给出。 */
+  --motif: none;
+}
+
+/* ── 基础 ─────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-text);
+  font-size: var(--step-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 99;
+  padding: 0.75rem 1rem;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+.skip:focus {
+  left: var(--margin);
+  top: var(--margin);
+}
+
+/* 母题：照片这一档用外部 SVG 遮罩，首屏与页脚用同一份几何画成内联 SVG */
+.framed {
+  position: relative;
+  aspect-ratio: 1;
+  -webkit-mask-image: var(--motif);
+  mask-image: var(--motif);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.framed > img,
+.framed > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── 类型 ─────────────────────────────────────────────────────────────── */
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: var(--step-head);
+}
+
+.prose p {
+  max-width: 46ch;
+  line-height: 1.6;
+}
+
+.prose p + p {
+  margin-top: 0.85em;
+}
+
+code {
+  font-family: inherit;
+  font-weight: 500;
+  background: var(--color-surface);
+  padding: 0.08em 0.34em;
+}
+
+.figure-credit {
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+/* ── 按钮：全页一个形状（直角），一种填充 ─────────────────────────────── */
+
+.btn {
+  display: inline-block;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-family: var(--font-text);
+  font-size: var(--step-body);
+  font-weight: 500;
+  line-height: 1;
+  padding: 1.05em 1.5em;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 0.18s var(--ease-out), background-color 0.18s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+.link-plain {
+  font-size: var(--step-body);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.28em;
+  transition: text-decoration-color 0.22s ease;
+}
+.link-plain:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ═══ 页头：没有导航条，只有字标与三个链接 ═══════════════════════════════ */
+
+.masthead {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter);
+  padding: var(--margin);
+}
+
+.masthead__brand {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--step-lead);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.masthead__nav {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(1rem, 2.6vw, 2.5rem);
+}
+
+/* ═══ 1 首屏：一块颜色 + 一个巨大的剪影 ═════════════════════════════════ */
+
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  align-content: center;
+  padding: var(--block) var(--margin) var(--margin);
+  overflow: hidden;
+}
+
+/* 母题在首屏是巨大剪影，从右侧进入，被视口裁切。
+   用左边界锚定 —— 视口一变宽，它只会更靠右，不会压到文字栏上。 */
+.hero__motif {
+  position: absolute;
+  top: 50%;
+  left: 54%;
+  translate: 0 -50%;
+  width: 120vh;
+  height: 120vh;
+  color: var(--color-accent);
+  pointer-events: none;
+}
+
+.hero__stack {
+  position: relative;
+  z-index: 1;
+  max-width: min(46rem, 42vw);
+}
+
+.hero__title {
+  font-size: var(--step-display);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  margin-bottom: clamp(1rem, 2.4vw, 1.75rem);
+}
+
+.hero__title span {
+  display: block;
+}
+
+.hero__title span:last-child {
+  color: var(--color-ink);
+}
+
+.hero__support {
+  max-width: 34ch;
+  text-wrap: pretty;
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+/* ═══ 2 能力拼版：12 列 × 8 行的板块，每块是一张真实输出 ══════════════ */
+
+.caps {
+  padding: var(--block) var(--margin);
+}
+
+.caps__board {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 8.5rem;
+  gap: 0.5rem;
+}
+
+/* 方块 = 照片区 + 底色说明条，说明落在平色上而不是压在照片上 */
+.tile {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+/* 标题格：板块的第一格放标题与一句说明。压深一档色，内容居中，
+   于是这块空白是排版里的一个停顿，而不是拼版上漏掉的照片。 */
+.tile--heading {
+  background: var(--color-panel);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(0.6rem, 1.1vw, 1rem);
+  padding: clamp(1rem, 1.6vw, 1.5rem);
+}
+
+.tile__stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.tile--heading h2 {
+  font-size: var(--step-head);
+  line-height: 1;
+  text-wrap: nowrap;
+}
+
+.tile--heading p {
+  max-width: 32ch;
+  color: var(--color-muted);
+  font-size: var(--step-body);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* 版式：标题 6×2 · 打开 6×2 · 灰度 6×4 · 反相 6×2 · 四小块 3×2 · 增强 6×2 */
+.t-heading { grid-column: span 6; grid-row: span 2; }
+.t-open    { grid-column: span 6; grid-row: span 2; }
+.t-gray    { grid-column: span 6; grid-row: span 4; }
+.t-invert  { grid-column: span 6; grid-row: span 2; }
+.t-small   { grid-column: span 3; grid-row: span 2; }
+.t-enhance { grid-column: span 6; grid-row: span 2; }
+
+/* 母题在方块里居中并放大到 145%，四条边都裁到它 —— 方块因此被照片填满，
+   只剩四个凹角露出底色 */
+.tile__frame {
+  position: absolute;
+  inset: -22.5%;
+  transition: transform 0.5s var(--ease-out);
+}
+
+.tile:hover .tile__frame {
+  transform: scale(1.045);
+}
+
+.tile__cap {
+  padding: clamp(0.7rem, 1.2vw, 1.05rem) clamp(0.75rem, 1.4vw, 1.25rem);
+}
+
+.tile__cap b {
+  display: block;
+  font-weight: 500;
+  font-size: var(--step-body);
+  line-height: 1.2;
+}
+
+.tile__cap span {
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  line-height: 1.35;
+  display: block;
+  margin-top: 0.15em;
+}
+
+.tile--accent {
+  background: var(--color-accent);
+}
+
+.tile--accent .tile__cap b {
+  color: var(--color-accent-ink);
+}
+.tile--accent .tile__cap span {
+  color: var(--color-accent-ink);
+  opacity: 0.75;
+}
+
+/* ═══ 3 满幅照片带：把页面切成两半 ════════════════════════════════════ */
+
+.band {
+  position: relative;
+}
+.band img {
+  width: 100%;
+  height: clamp(18rem, 46vh, 32rem);
+  object-fit: cover;
+}
+.band__credit {
+  position: absolute;
+  left: var(--margin);
+  bottom: var(--margin);
+  padding: 0.4em 0.6em;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: var(--step-small);
+  line-height: 1.3;
+}
+
+/* ═══ 4 现场试一试：全幅场地 + 一个放大的控件 ═════════════════════════ */
+
+.field {
+  position: relative;
+  min-height: 92svh;
+  display: grid;
+  align-content: center;
+  padding: var(--block) var(--margin);
+  background: var(--color-panel);
+  transition: background-color 0.55s var(--ease-out);
+  overflow: hidden;
+}
+
+.field[data-op="invert"],
+.field[data-op="grayscale"] {
+  background: var(--color-surface);
+}
+
+.field__head {
+  position: relative;
+  z-index: 2;
+  margin-bottom: clamp(1.5rem, 4vw, 3rem);
+}
+
+.field__title {
+  font-size: var(--step-head);
+  line-height: 1;
+}
+
+.field__code {
+  display: inline-block;
+  margin-top: 0.7em;
+  font-size: var(--step-body);
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 0.3em 0.6em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.field__body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: center;
+}
+
+.field__stage {
+  position: relative;
+}
+
+.field__stage .framed {
+  width: min(58vh, 100%);
+}
+
+/* 签名动作：取景框从右侧拉开，里面的画面从 1.12 收到 1 */
+.field__stage .framed > img {
+  animation: shutter 1.1s var(--ease-out) both;
+}
+
+@keyframes shutter {
+  from {
+    clip-path: inset(0 0 0 100%);
+    transform: scale(1.12);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: scale(1);
+  }
+}
+
+.field__panel h3 {
+  font-family: var(--font-text);
+  font-weight: 500;
+  font-size: var(--step-body);
+  line-height: 1.3;
+  margin-bottom: 0.9em;
+}
+
+.field__ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: clamp(1.25rem, 2.6vw, 2rem);
+}
+
+.op {
+  font: inherit;
+  font-size: var(--step-small);
+  line-height: 1;
+  padding: 0.95em 1.1em;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-ink);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s var(--ease-out);
+}
+.op:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+.op[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.field__samples {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: clamp(1.25rem, 2.6vw, 2rem);
+}
+
+.sample {
+  font: inherit;
+  font-size: var(--step-small);
+  padding: 0.7em 1.05em;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-muted);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+.sample:hover {
+  color: var(--color-ink);
+}
+.sample[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--color-ink);
+}
+
+.field__note {
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  max-width: 34ch;
+  line-height: 1.45;
+}
+
+/* 两张样图的署名：CC BY 与 CC BY-SA 都要求标注 */
+.field__credit {
+  margin-top: clamp(0.65rem, 1.2vw, 0.9rem);
+}
+
+/* ═══ 5 一张图，三步 ═══════════════════════════════════════════════════ */
+
+.steps {
+  padding: var(--block) var(--margin);
+}
+
+.steps__head {
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+}
+
+.steps__diagram {
+  width: 100%;
+  height: auto;
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.steps__legend {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gutter);
+}
+
+.steps__legend b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--step-lead);
+  line-height: 1;
+  margin-bottom: 0.45em;
+}
+
+.steps__legend p {
+  font-size: var(--step-body);
+  line-height: 1.5;
+  max-width: 32ch;
+}
+
+/* ═══ 6 它认识的格式：全幅表，只有一个字号 ═══════════════════════════ */
+
+.registry {
+  padding: var(--block) var(--margin);
+}
+
+.registry__head {
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+  font-size: var(--step-lead);
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+.rtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step-lead);
+  line-height: 1.25;
+  font-weight: 300;
+}
+
+.rtable th,
+.rtable td {
+  text-align: left;
+  font-weight: 300;
+  padding: 0.4em 0;
+  vertical-align: baseline;
+}
+
+/* 方向表明说：每个单元格同一个字号，没有粗体，靠列起点组织
+   —— 表头也守这一条，不做成小字标签 */
+.rtable thead th {
+  color: var(--color-muted);
+  padding-bottom: 1.1em;
+}
+
+.rtable tbody tr + tr th,
+.rtable tbody tr + tr td {
+  border-top: 1px solid var(--color-keyline);
+}
+
+.rtable .c-name { width: 30%; }
+.rtable .c-yn { width: 14%; }
+.rtable .c-note { width: 42%; font-size: var(--step-body); color: var(--color-muted); }
+
+.registry__foot {
+  margin-top: clamp(1.25rem, 2.4vw, 2rem);
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  max-width: 60ch;
+  line-height: 1.5;
+}
+
+/* ═══ 7 从 1995 年续写至今：内嵌深色面板 ═════════════════════════════ */
+
+.origin {
+  margin: 0 var(--margin) var(--block);
+  background: var(--color-panel);
+  padding: clamp(2rem, 5vw, 4.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+
+.origin__left h2 {
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.origin__left .framed {
+  width: min(30rem, 88%);
+}
+
+.origin__shot .figure-credit {
+  margin-top: clamp(0.6rem, 1.2vw, 0.9rem);
+  width: min(30rem, 88%);
+}
+
+.origin__right {
+  padding-top: clamp(0.5rem, 2vw, 2rem);
+}
+
+.origin__block + .origin__block {
+  margin-top: clamp(1.75rem, 3.4vw, 3rem);
+}
+
+.origin__block b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--step-lead);
+  line-height: 1;
+  margin-bottom: 0.5em;
+}
+
+.origin__block p {
+  font-size: var(--step-body);
+  line-height: 1.6;
+  max-width: 34ch;
+}
+
+.origin__action {
+  margin-top: clamp(1.75rem, 3.4vw, 3rem);
+}
+
+/* ═══ 8 谁在背后支持：名字写成一句话 ═════════════════════════════════
+   槽位由「方块网格」重画为「名字排成一句话」：内容其实是七个机构加各自做了什么，
+   句子能同时装下两者，而方块只能装一个名字，还会与上面的能力拼版重复同一套盒子语言。 */
+
+.backers {
+  padding: var(--block) var(--margin);
+  background: var(--color-surface);
+}
+
+/* 房规优先于方向表：大字陈述段落封顶 36px，落回 --step-lead 这一档 */
+.backers__line {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--step-lead);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+  max-width: 62ch;
+}
+
+.backers__note {
+  margin-top: clamp(1.5rem, 3vw, 2.5rem);
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  max-width: 46ch;
+  line-height: 1.5;
+}
+
+/* ═══ 9 真实世界的图像 ═══════════════════════════════════════════════ */
+
+.plate {
+  padding: 0 var(--margin) var(--block);
+}
+
+.plate__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--gutter);
+  align-items: end;
+}
+
+.plate__row .framed {
+  transition: transform 0.55s var(--ease-out);
+}
+.plate__row .framed:hover {
+  transform: translateY(-6px);
+}
+
+.plate__copy {
+  margin-top: clamp(1rem, 2.2vw, 1.75rem);
+}
+
+/* ═══ 10 常见问题：一块一块的折叠板 ═══════════════════════════════════ */
+
+.faq {
+  padding: var(--block) var(--margin);
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+
+.faq__head {
+  position: sticky;
+  top: var(--margin);
+}
+
+.faq__list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.qa {
+  background: var(--color-surface);
+}
+
+.qa[open] {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.qa summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 4.5rem;
+  padding: 1rem clamp(0.85rem, 1.5vw, 1.5rem);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--step-lead);
+  line-height: 1.25;
+  font-weight: 300;
+}
+
+.qa summary::-webkit-details-marker {
+  display: none;
+}
+
+.qa__sign {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+}
+
+.qa__sign::before,
+.qa__sign::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 2px;
+  background: currentColor;
+  transform: translateY(-50%);
+  transition: transform 0.28s var(--ease-out);
+}
+.qa__sign::after {
+  transform: translateY(-50%) rotate(90deg);
+}
+.qa[open] .qa__sign::after {
+  transform: translateY(-50%) rotate(0deg);
+}
+
+.qa__answer {
+  padding: 0 clamp(0.85rem, 1.5vw, 1.5rem) 1.25rem;
+  font-size: var(--step-body);
+  line-height: 1.55;
+  max-width: 52ch;
+}
+
+/* ═══ 11 收尾：第一步已经开着 ═══════════════════════════════════════ */
+
+.close {
+  position: relative;
+  min-height: 88svh;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  padding: var(--block) var(--margin);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: end;
+  overflow: hidden;
+}
+
+.close__line {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--step-display);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  margin-bottom: 1.25rem;
+}
+
+.close__line span {
+  display: block;
+}
+
+.close__say {
+  font-size: var(--step-body);
+  max-width: 30ch;
+  line-height: 1.5;
+}
+
+.close__box {
+  background: var(--color-accent-ink);
+  color: var(--color-ink);
+  padding: clamp(1.25rem, 2.6vw, 2rem);
+}
+
+.close__box p {
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  margin-bottom: 0.9em;
+}
+
+.close__cmd {
+  display: block;
+  font-size: var(--step-body);
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.7em 0.85em;
+  margin-bottom: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.close__box .btn {
+  margin-top: 1rem;
+  width: 100%;
+  text-align: center;
+}
+
+/* ═══ 页脚：把母题放大当版记 ═════════════════════════════════════════ */
+
+.footer {
+  padding: var(--block) var(--margin) var(--margin);
+}
+
+.footer__close {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+
+.footer__mark {
+  width: clamp(8rem, 28svh, 19rem);
+  height: clamp(8rem, 28svh, 19rem);
+  color: var(--color-accent);
+}
+
+.footer__cols {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+
+.footer__col p {
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  margin-bottom: 0.9em;
+}
+
+.footer__col ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.5em;
+}
+
+.footer__col a {
+  font-size: var(--step-body);
+  display: inline-block;
+}
+
+.footer__col a:hover {
+  color: var(--color-accent);
+}
+
+.footer__legal {
+  margin-top: clamp(2rem, 4vw, 3.5rem);
+  display: grid;
+  gap: 0.35em;
+  font-size: var(--step-small);
+  color: var(--color-muted);
+  max-width: 72ch;
+  line-height: 1.5;
+}
+
+/* ═══ 动效层：入场 · 反馈 · 一段会动的画面 ═══════════════════════════ */
+
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.62s var(--ease-out), transform 0.62s var(--ease-out);
+}
+
+.js [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.js [data-reveal][style*="--d"] {
+  transition-delay: var(--d, 0ms);
+}
+
+/* 只有视口裁切与位移，内容从不依赖动画才可见 */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .band img {
+      animation: drift linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .field__stage .framed > img {
+    animation: none;
+  }
+  .band img {
+    animation: none;
+  }
+  .btn,
+  .op,
+  .tile__frame,
+  .plate__row .framed {
+    transition: none;
+  }
+}
+
+/* ═══ 手机：自己的构图，不是缩小版 ═══════════════════════════════════ */
+
+@media (max-width: 900px) {
+  :root {
+    --block: clamp(4.5rem, 14vw, 7rem);
+  }
+
+  .masthead__nav {
+    gap: 1rem;
+  }
+  .masthead__nav .link-plain:first-child {
+    display: none;
+  }
+
+  /* 首屏：剪影落到下方，被左右下三边裁切 */
+  .hero {
+    align-content: start;
+    padding-top: clamp(5rem, 16vw, 7rem);
+    min-height: 90svh;
+  }
+  /* 手机上让母题基本完整地落到底部：只被下边缘切掉一点，
+     裁到只剩一条就读不出这个形状了 */
+  .hero__motif {
+    top: auto;
+    bottom: calc(var(--margin) * -1 - 3vw);
+    right: auto;
+    left: 50%;
+    translate: -50% 0;
+    width: min(94vw, 46svh);
+    height: min(94vw, 46svh);
+  }
+  .hero__title {
+    font-size: 11.5vw;
+  }
+  .hero__stack {
+    max-width: 100%;
+  }
+
+  /* 方块的宽高比要贴近正方，方形母题才填得满 */
+  .caps__board {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 20vw;
+    gap: 0.375rem;
+  }
+  .t-heading { grid-column: span 2; grid-row: span 2; }
+  .t-open    { grid-column: span 2; grid-row: span 4; }
+  .t-gray    { grid-column: span 2; grid-row: span 4; }
+  .t-invert  { grid-column: span 1; grid-row: span 3; }
+  .t-small   { grid-column: span 1; grid-row: span 3; }
+  .t-enhance { grid-column: span 1; grid-row: span 3; }
+
+  .field__body {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .field__stage .framed {
+    width: 84vw;
+  }
+
+  .steps__legend {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .rtable {
+    display: block;
+    font-size: var(--step-body);
+  }
+  .rtable thead {
+    display: none;
+  }
+  .rtable tbody,
+  .rtable tr {
+    display: block;
+  }
+  .rtable tr {
+    padding: 0.9em 0;
+  }
+  .rtable tr + tr {
+    border-top: 1px solid var(--color-keyline);
+  }
+  .rtable th,
+  .rtable td {
+    display: inline;
+    padding: 0;
+  }
+  .rtable .c-yn {
+    display: inline-block;
+    width: auto;
+    margin-right: 0.8em;
+    font-size: var(--step-small);
+    color: var(--color-muted);
+  }
+  .rtable .c-note {
+    display: block;
+    margin-top: 0.35em;
+  }
+  .rtable tbody tr + tr th,
+  .rtable tbody tr + tr td {
+    border-top: 0;
+  }
+
+  .origin {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: clamp(1.5rem, 5vw, 2.5rem);
+  }
+
+  .plate__row {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 0.5rem;
+  }
+  .plate__row > :first-child {
+    grid-column: span 2;
+  }
+
+  .faq {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+  .faq__head {
+    position: static;
+  }
+
+  .close {
+    grid-template-columns: 1fr;
+    align-items: end;
+    gap: 2.5rem;
+    min-height: 88svh;
+  }
+
+  .footer__close {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .footer__cols {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.75rem;
+  }
+  .footer__mark {
+    width: clamp(7rem, 30vw, 11rem);
+    height: clamp(7rem, 30vw, 11rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .caps__board {
+    grid-auto-rows: 22vw;
+  }
+  .tile__cap span {
+    display: none;
+  }
+  .plate__row {
+    grid-template-columns: 1fr;
+  }
+  .plate__row > :first-child {
+    grid-column: span 1;
+  }
+}
