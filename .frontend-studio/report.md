@@ -115,15 +115,41 @@ ROUND 3
 
 ```bash
 bun install
-python scripts/build_assets.py      # 生成母题遮罩与八张运算输出
+python scripts/build_assets.py      # 生成八张运算输出（母题由 assets/brand/make_svg.py 产出）
 python scripts/prepare_images.py    # 裁切页面用图
 bun run build
-portless --script preview           # → https://pillow-cn.localhost
+portless --script preview           # → https://pillow-cn.localhost/Pillow-cn/
 ```
 
 门禁：
 
 ```bash
 node <frontend-studio>/scripts/lint.mjs dist/index.html
-node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/
+node <frontend-studio>/scripts/inspect.mjs https://pillow-cn.localhost/Pillow-cn/
 ```
+
+---
+
+## 10 部署
+
+| 项 | 值 |
+| --- | --- |
+| 仓库 | https://github.com/bbylw/Pillow-cn（public，初始提交 58 个文件 / 19.4 MiB） |
+| 站点 | https://bbylw.github.io/Pillow-cn/ → 实际 301 到 **https://w404.nyc.mn/Pillow-cn/** |
+| 方式 | GitHub Pages「项目站」，`build_type: workflow`，由 Actions 构建发布 |
+| 工作流 | `.github/workflows/deploy.yml`（push 到 main 触发，也可手动 `workflow_dispatch`） |
+| 首次运行 | 成功，build 与 deploy 各约 48s |
+
+**子路径是这里唯一的坑。** 项目站落在 `/Pillow-cn/` 之下，`public/` 里的文件不经打包器，
+写根绝对路径会在线上 404。处理方式：`astro.config.mjs` 设 `base: "/Pillow-cn"`，
+所有 public 资源统一走 `src/lib/base.ts` 的 `asset()`。
+
+注意 Astro 7 的 `import.meta.env.BASE_URL` 返回 `"/Pillow-cn"`，**结尾没有斜杠**
+（文档说会规范化，实测没有），所以 `asset()` 先 `replace(/\/+$/, "")` 再拼，
+`base` 写成带斜杠或不带斜杠都成立。
+
+线上逐个资源验过：首页与它引用的 17 个绝对路径（CSS、12 张图、favicon、母题 SVG、
+样图、视频与海报帧）全部 200；行内 `--motif` 与客户端 bundle 里的前缀都正确。
+`w404.nyc.mn` 是本账号 Pages 的默认域名（本仓库 Pages 设置里 `cname` 为空），
+如果要换成自己的域名（例如 `pillow.ndjp.net`），加 CNAME 记录 + 在本仓库设置自定义域名即可，
+`base` 不用改——换了域名路径仍然是 `/Pillow-cn/`；只有把站提到域名根目录时才要把它改成 `/`。
