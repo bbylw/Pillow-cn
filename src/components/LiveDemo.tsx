@@ -14,6 +14,8 @@ type Op = {
   code: string;
   /** 画布停在什么状态，读给屏幕阅读器 */
   describes: string;
+  /** 一句话说明这一步在做什么，显示在标题下面，随选中项变化 */
+  note: string;
 };
 
 const OPS: Op[] = [
@@ -22,28 +24,50 @@ const OPS: Op[] = [
     label: "原图",
     code: 'im = Image.open("photo.jpg")',
     describes: "未经处理的原始照片",
+    note: "先读进来，此刻还没动过一个像素。",
   },
-  { id: "gray", label: "灰度", code: 'im.convert("L")', describes: "转成灰度的照片" },
-  { id: "invert", label: "反相", code: "ImageOps.invert(im)", describes: "颜色反转的照片" },
+  {
+    id: "gray",
+    label: "灰度",
+    code: 'im.convert("L")',
+    describes: "转成灰度的照片",
+    note: "丢掉颜色，只留亮度。",
+  },
+  {
+    id: "invert",
+    label: "反相",
+    code: "ImageOps.invert(im)",
+    describes: "颜色反转的照片",
+    note: "每个通道取反，亮暗对调。",
+  },
   {
     id: "blur",
     label: "模糊",
     code: "im.filter(ImageFilter.GaussianBlur(8))",
     describes: "高斯模糊后的照片",
+    note: "高斯核按半径加权平均，边缘被抹开。",
   },
   {
     id: "posterize",
     label: "色调分离",
     code: "ImageOps.posterize(im, 3)",
     describes: "色阶被压缩到八级的照片",
+    note: "每通道压到几位，色阶变少。",
   },
   {
     id: "pixelate",
     label: "像素化",
     code: "im.resize((w // 24, h // 24), Image.NEAREST).resize((w, h), Image.NEAREST)",
     describes: "被放大成大方块的照片",
+    note: "先降采样再放大，细节变成大方块。",
   },
-  { id: "mirror", label: "左右翻转", code: "ImageOps.mirror(im)", describes: "左右镜像翻转的照片" },
+  {
+    id: "mirror",
+    label: "左右翻转",
+    code: "ImageOps.mirror(im)",
+    describes: "左右镜像翻转的照片",
+    note: "沿竖轴镜像，左右对调。",
+  },
 ];
 
 // 两张样图放在 public/ 下、不过打包器，路径要经 asset() 拼上子路径前缀。
@@ -228,6 +252,7 @@ export default function LiveDemo() {
         </p>
         <h2 className="field__title">{active.label}</h2>
         <p className="field__code">{active.code}</p>
+        <p className="field__lede">{active.note}</p>
       </div>
 
       <div className="field__body">

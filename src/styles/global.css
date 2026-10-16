@@ -132,11 +132,16 @@ a {
   mask-position: center;
 }
 
+/* 每块的取景由 tile 上的 --focus / --zoom 给出（见 index.astro 的 CAPS）：
+   同一张照片、八次真实运算，但裁切各异。没设这两个变量的地方
+   （演示画布、来历照片、plate 三张）保持原样。 */
 .framed > img,
 .framed > video {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: var(--focus, 50% 50%);
+  transform: scale(var(--zoom, 1));
 }
 
 /* ── 类型 ─────────────────────────────────────────────────────────────── */
@@ -250,13 +255,14 @@ code {
   overflow: hidden;
 }
 
-/* 母题在首屏是巨大剪影，从右侧进入，被视口裁切。
-   用左边界锚定 —— 视口一变宽，它只会更靠右，不会压到文字栏上。 */
+/* 母题在首屏是巨大剪影，从右侧进入，底部探出画面被裁切。
+   用左边界锚定 —— 视口一变宽，它只会更靠右，不会压到文字栏上。
+   顶部必须落在页头下面：页头那三个链接是靠右的，而母题的竖条正好在那一带，
+   母题一旦探到页头高度，金色的链接就落在金色的形状上，直接看不见。 */
 .hero__motif {
   position: absolute;
-  top: 50%;
+  top: 8rem;
   left: 54%;
-  translate: 0 -50%;
   width: 120vh;
   height: 120vh;
   color: var(--color-accent);
@@ -456,11 +462,22 @@ code {
   max-width: 100%;
 }
 
+/* 当前这一步在做什么：随选中的运算变化，标题下面的一行 */
+.field__lede {
+  margin-top: clamp(0.6rem, 1vw, 0.9rem);
+  max-width: 46ch;
+  color: var(--color-muted);
+  font-size: var(--step-body);
+  line-height: 1.45;
+}
+
+/* 左栏按画布的高度收拢（60vh），画布因此填满自己那一栏，
+   栏与栏之间不再留一道没人用的空地；右栏吃掉剩下的宽度。 */
 .field__body {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-columns: minmax(0, 60vh) minmax(0, 1fr);
   gap: clamp(1.5rem, 4vw, 4rem);
   align-items: center;
 }
@@ -469,11 +486,11 @@ code {
   position: relative;
 }
 
+/* 签名动作：取景框从右侧拉开，里面的画面从 1.12 收到 1 */
 .field__stage .framed {
-  width: min(58vh, 100%);
+  width: 100%;
 }
 
-/* 签名动作：取景框从右侧拉开，里面的画面从 1.12 收到 1 */
 .field__stage .framed > img {
   animation: shutter 1.1s var(--ease-out) both;
 }
@@ -1026,6 +1043,25 @@ code {
   }
   .masthead__nav .link-plain:first-child {
     display: none;
+  }
+
+  /* 手机首屏不出现第二颗金色按钮：页头这一项退化成普通文字链接，
+     主动作只留在首屏那一颗上，金色因此仍然只指向一件事 */
+  .masthead__nav .btn {
+    padding: 0;
+    background: none;
+    color: var(--color-muted);
+    font-weight: 400;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.28em;
+  }
+  .masthead__nav .btn:hover {
+    background: none;
+    color: var(--color-ink);
+    text-decoration-color: currentColor;
+    transform: none;
   }
 
   /* 首屏：剪影落到下方，被左右下三边裁切 */

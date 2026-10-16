@@ -24,16 +24,18 @@ const LINKS = {
   repo: "https://github.com/python-pillow/Pillow",
 };
 
-/* 八块版 —— 每块是一张真实照片经 Pillow 运算后的输出，素材由 scripts/build_assets.py 生成 */
+/* 八块版 —— 每块是一张真实照片经 Pillow 运算后的输出，素材由 scripts/build_assets.py 生成。
+   同一张照片、八次真实运算，但每块的取景（focus/zoom）各异：
+   拼版因此读成八张图，而不是同一张图重复八遍。 */
 const CAPS = [
-  { img: opOpen, slot: "t-open", tone: "", name: "打开", note: "读入文件，惰性解码", code: "Image.open()" },
-  { img: opGray, slot: "t-gray", tone: "", name: "灰度", note: "丢掉颜色，只留亮度", code: "ImageOps.grayscale()" },
-  { img: opInvert, slot: "t-invert", tone: "tile--accent", name: "反相", note: "每个通道取反", code: "ImageOps.invert()" },
-  { img: opBlur, slot: "t-small", tone: "", name: "模糊", note: "高斯核，半径可调", code: "GaussianBlur()" },
-  { img: opPosterize, slot: "t-small", tone: "", name: "色调分离", note: "每通道压到几位", code: "posterize()" },
-  { img: opPixelate, slot: "t-small", tone: "", name: "像素化", note: "降采样再放大", code: "Image.resize()" },
-  { img: opMirror, slot: "t-small", tone: "", name: "镜像", note: "左右翻转", code: "ImageOps.mirror()" },
-  { img: opEnhance, slot: "t-enhance", tone: "tile--accent", name: "增强", note: "先提对比，再锐化", code: "ImageEnhance" },
+  { img: opOpen, slot: "t-open", tone: "", name: "打开", note: "读入文件，惰性解码", code: "Image.open()", focus: "50% 44%", zoom: 1 },
+  { img: opGray, slot: "t-gray", tone: "", name: "灰度", note: "丢掉颜色，只留亮度", code: "ImageOps.grayscale()", focus: "62% 40%", zoom: 1.16 },
+  { img: opInvert, slot: "t-invert", tone: "tile--accent", name: "反相", note: "每个通道取反", code: "ImageOps.invert()", focus: "34% 62%", zoom: 1.22 },
+  { img: opBlur, slot: "t-small", tone: "", name: "模糊", note: "高斯核，半径可调", code: "GaussianBlur()", focus: "50% 24%", zoom: 1.28 },
+  { img: opPosterize, slot: "t-small", tone: "", name: "色调分离", note: "每通道压到几位", code: "posterize()", focus: "68% 56%", zoom: 1.1 },
+  { img: opPixelate, slot: "t-small", tone: "", name: "像素化", note: "降采样再放大", code: "Image.resize()", focus: "30% 38%", zoom: 1.34 },
+  { img: opMirror, slot: "t-small", tone: "", name: "镜像", note: "左右翻转", code: "ImageOps.mirror()", focus: "56% 72%", zoom: 1.14 },
+  { img: opEnhance, slot: "t-enhance", tone: "tile--accent", name: "增强", note: "先提对比，再锐化", code: "ImageEnhance", focus: "44% 50%", zoom: 1.06 },
 ];
 
 const FORMATS = [
@@ -168,7 +170,7 @@ for (let row = 0; row < 6; row++) {
         </div>
 
         {CAPS.map((c, i) => (
-          <div class={`tile ${c.slot} ${c.tone}`}>
+          <div class={`tile ${c.slot} ${c.tone}`} style={`--focus:${c.focus}; --zoom:${c.zoom}`}>
             <div class="tile__stage">
               <div class="tile__frame framed" data-reveal style={`--d:${i * 45}ms`}>
                 <Image src={c.img} alt={`一张照片经 ${c.name} 处理后的结果`} loading="lazy" decoding="async" />

@@ -8,6 +8,12 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+
+// 正式域名。canonical 与 og:* 都必须是绝对地址，相对地址分享出去不认。
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+// 分享卡片是 scripts/make_og.py 生成的：深绿底 + 母题裁过的照片 + 字标，
+// 和首屏同一套语言；里面的照片是 CC0 的，不把署名与相同方式共享的要求带到别人的时间线里。
+const shareImage = new URL(asset("og.jpg"), Astro.site).href;
 ---
 
 <!doctype html>
@@ -19,6 +25,19 @@ const { title, description } = Astro.props;
     <meta name="description" content={description} />
     <meta name="theme-color" content="#133621" />
     <link rel="icon" href={asset("favicon.svg")} type="image/svg+xml" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- 分享卡片 -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Pillow 中文站" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={shareImage} />
+    <meta property="og:image:alt" content="森林地表闪着光的苔藓，装进 Pillow 标识的轮廓里" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
